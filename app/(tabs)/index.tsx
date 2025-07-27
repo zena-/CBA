@@ -1,15 +1,18 @@
 import { View, Text, TextInput, Image, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
 import { useAppData } from '../../hooks/useAppData';
 import { generateProtocol, Context } from '../../lib/ai';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { sendToChiliB } from '../../services/chat';
 import type { ChatMessage } from '../../services/chat';
+// import * as Location from 'expo-location';
+import { getPantryItems } from '../../lib/storage';
 
 export default function Guidance() {
   const { sleepHours, meetingsToday } = useAppData();
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState(() => {
-    const context: Context = {
+  const [pantry, setPantry] = useState<string[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+  const context: Context = {
       sleepHours: sleepHours ?? 8,
       meetingsToday: meetingsToday ?? 0,
       cyclePhase: false,
@@ -18,19 +21,67 @@ export default function Guidance() {
     return generateProtocol(context).map((m) => ({ type: 'ai', text: m }));
   });
 
-  const handleUserSubmit = () => {
+  const handleUserSubmit = async () => {
     if (!input.trim()) return;
-    const userMsg = { type: 'user', text: input };
-    const aiReply = {
-      type: 'ai',
-      text:
-        "If you're getting your favorite, sushi, then I'll recommend Nobu. " +
-        "If you're trying to up your protein, try a steakhouse. Let me know what you're in the mood for and who you're going with " +
-        "and I’ll send you a few places to choose from.",
-    };
-    setMessages((prev) => [...prev, userMsg, aiReply]);
+
+    const userMsg: ChatMessage = { type: 'user', text: input.trim() };
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
     setInput('');
+
+    try {
+      // Step 1: Get location
+      // const { status } = await Location.requestForegroundPermissionsAsync();
+      // if (status !== 'granted') {
+      //   console.log('Location permission not granted');
+      //   throw new Error('No location permission');
+      // }
+      // const location = await Location.getCurrentPositionAsync({});
+      // const { latitude, longitude } = location.coords;
+
+      // Step 2: Fetch weather
+      const weather = {
+        summary: 'Clear',
+        temperature: 78,
+        humidity: 55,
+      };
+
+      // Step 3: Add weather to context
+      const contextPayload = {
+        sleepHours,
+        meetingsToday,
+        cyclePhase: false,
+        pantry,
+        weather,
+      };
+
+      const aiText = await sendToChiliB(newMessages, contextPayload);
+      setMessages((prev) => [...prev, { type: 'ai', text: aiText }]);
+    } catch (e) {
+      console.log(e);
+      setMessages((prev) => [
+        ...prev,
+        { type: 'ai', text: "Hmm, I'm having trouble connecting right now." },
+      ]);
+    }
   };
+
+  useEffect(() => {
+    getPantryItems().then(setPantry);
+  }, []);
+
+  useEffect(() => {
+    if (pantry.length === 0) return;
+
+    const context: Context = {
+      sleepHours: sleepHours ?? 8,
+      meetingsToday: meetingsToday ?? 0,
+      cyclePhase: false,
+      pantry,
+    };
+    const initialMessages = generateProtocol(context).map((m) => ({ type: 'ai', text: m }));
+    setMessages(initialMessages);
+  }, [pantry, sleepHours, meetingsToday]);
 
   return (
     <KeyboardAvoidingView
@@ -69,7 +120,7 @@ export default function Guidance() {
             marginBottom: 20
           }}
         >
-          GUIDANCE
+          Chili B.
         </Text>
 
         <ScrollView
@@ -125,7 +176,6 @@ export default function Guidance() {
             style={{
               flex: 1,
               fontSize: 14,
-              textAlign: 'right',
               paddingRight: 10,
               paddingVertical: 8,
               outlineStyle: 'none',
