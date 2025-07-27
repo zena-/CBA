@@ -9,7 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "This app uses your health data to personalize wellness recommendations.",
+        "NSHealthUpdateUsageDescription": "This app reads your sleep and step count from Health to guide your wellness routine.",
+        "NSCalendarsUsageDescription": "This app uses your calendar to anticipate stress and plan around your schedule."
+      }
     },
     "android": {
       "adaptiveIcon": {
