@@ -1,18 +1,14 @@
 // Vercel serverless function
 import OpenAI from 'openai';
 
-export const config = {
-  runtime: 'edge',
-};
-
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
 export default async function handler(req: Request) {
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return res.status(405).send('Method not allowed');
   }
 
-  const { messages, context } = await req.json();
+  const { messages, context } = req.json();
 
   const system = `
     You are Chili B. AI — a warm, proactive wellness assistant. You read structured context and respond with short, actionable, supportive advice. 
@@ -40,14 +36,10 @@ export default async function handler(req: Request) {
   ];
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-4o',
     messages: chat,
     temperature: 0.6,
   });
 
-  const reply = completion.choices[0]?.message?.content ?? '';
-
-  return new Response(JSON.stringify({ reply }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return res.status(200).json({ reply: completion.choices[0]?.message?.content });
 }
