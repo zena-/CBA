@@ -143,8 +143,10 @@ export default async function handler(req: Request): Promise<Response> {
       tools: [zapierTool],
       tool_choice: "auto",
       text: {
-        format: "json",
-        schema: protocolSchema,
+        format: {
+          type: "json",
+          schema: protocolSchema,
+        },
       },
       input: [
         {
