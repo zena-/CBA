@@ -1,4 +1,3 @@
-import type { Context } from './types';
 import type { DailyProtocol } from '../types/protocol';
 
 export type Context = {
@@ -6,43 +5,35 @@ export type Context = {
   meetingsToday?: number;
   cyclePhase?: boolean;
   pantry?: string[];
-  weather?: {
-    tempF?: number;
-    summary?: string;
-  };
+  weather?: { tempF?: number; summary?: string };
 };
 
-// Prioritize env var, fallback to production URL
 const API_URL =
   process.env.EXPO_PUBLIC_API_BASE?.trim() ||
-  'https://cba-swart.vercel.app/api/protocol';
+  'https://cba-swart.vercel.app/api/protocol'; // <- your working prod URL
 
 export async function generateProtocol(context: Context): Promise<DailyProtocol> {
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(context),
     });
 
     if (!res.ok) {
-      const errorText = await res.text();
-      console.error('Protocol API error:', errorText);
+      const body = await res.text();
+      console.error('Protocol API error:', body);
       throw new Error('Failed to generate protocol');
     }
 
     const data = await res.json();
-    return data;
-  } catch (err) {
-    console.warn('Falling back to local protocol:', err);
+    return data as DailyProtocol;
+  } catch (e) {
+    console.warn('Falling back to local protocol:', e);
     return fallbackProtocol(context);
   }
 }
 
-
-// --- Very small fallback just in case ---
 function fallbackProtocol(ctx: Context): DailyProtocol {
   const date = new Date().toISOString().slice(0, 10);
   return {
