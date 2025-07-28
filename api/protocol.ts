@@ -144,7 +144,7 @@ export default async function handler(req: Request): Promise<Response> {
       tool_choice: "auto",
       text: {
         format: {
-          type: "json",
+          type: "json_schema",
           schema: protocolSchema,
         },
       },
