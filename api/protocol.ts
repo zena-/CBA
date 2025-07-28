@@ -71,6 +71,17 @@ const protocolSchema = {
 } as const;
 
 export default async function handler(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      },
+    });
+  }
+
   if (req.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
   }
@@ -131,7 +142,10 @@ export default async function handler(req: Request): Promise<Response> {
 
     return new Response(JSON.stringify(json), {
       status: 200,
-      headers: { "content-type": "application/json", "access-control-allow-origin": "*" },
+      headers: { 
+        "content-type": "application/json", 
+        "access-control-allow-origin": "*" 
+      },
     });
   } catch (err: any) {
     console.error("protocol API error", err);
