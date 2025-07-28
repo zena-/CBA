@@ -9,21 +9,45 @@ export type ContextPayload = {
 
 const API_URL = 'https://cba-pzlu.vercel.app/api/chat';
 
-export async function sendToChiliB(
-  messages: ChatMessage[],
-  context: ContextPayload
-): Promise<string> {
-  const res = await fetch(API_URL, {
+// export async function sendToChiliB(
+//   messages: ChatMessage[],
+//   context: ContextPayload
+// ): Promise<string> {
+//   const res = await fetch(API_URL, {
+//     method: 'POST',
+//     headers: { 'Content-Type': 'application/json' },
+//     body: JSON.stringify({ messages, context }),
+//   });
+
+//   if (!res.ok) {
+//     console.warn('Chat API error', await res.text());
+//     throw new Error('Chat API failed');
+//   }
+
+//   const data = await res.json();
+//   return data.reply as string;
+// }
+
+export async function streamToChiliB(contextPayload: any, onChunk: (text: string) => void) {
+  const response = await fetch('http://localhost:3000/api/stream', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages, context }),
+    body: JSON.stringify(contextPayload),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
 
-  if (!res.ok) {
-    console.warn('Chat API error', await res.text());
-    throw new Error('Chat API failed');
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  let text = '';
+
+  while (true) {
+    const { done, value } = await reader!.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+    text += chunk;
+    onChunk(text);
   }
 
-  const data = await res.json();
-  return data.reply as string;
+  return text;
 }
