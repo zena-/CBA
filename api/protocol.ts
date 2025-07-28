@@ -127,6 +127,11 @@ export default async function handler(req: Request): Promise<Response> {
       ],
     });
 
+    console.log("FULL OpenAI response:", resp);
+    if (!resp || !resp.output || !Array.isArray(resp.output)) {
+      throw new Error("OpenAI response missing expected 'output'");
+    }
+    
     const message = resp?.output?.[0];
     const jsonNode = message?.content?.find(
       (c: any) => c.type === "output_json"
@@ -146,6 +151,9 @@ export default async function handler(req: Request): Promise<Response> {
     });
   } catch (err: any) {
     console.error("protocol API error", err);
+    if (err instanceof Error && err.stack) {
+      console.error("Stack trace:", err.stack);
+    }
     return new Response(
       JSON.stringify({
         error: err?.message ?? "unknown",
