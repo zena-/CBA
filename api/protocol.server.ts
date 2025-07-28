@@ -4,7 +4,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import type { DailyProtocol } from "../types/protocol";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 const ZAPIER_MCP_URL = process.env.ZAPIER_MCP_URL!;
@@ -118,7 +118,7 @@ Return a DailyProtocol JSON object.
     };
 
     const response = await openai.beta.chat.completions.create({
-      model: "gpt-4-1106-preview", // or "gpt-4o" if available
+      model: "gpt-4-1106-preview", // or "gpt-4o"
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -128,10 +128,18 @@ Return a DailyProtocol JSON object.
           type: "function",
           function: {
             name: "zapier",
-            description: "Call Zapier MCP",
+            description: "Run a Zapier MCP automation",
             parameters: {
               type: "object",
-              properties: {},
+              properties: {
+                sleepHours: { type: "number" },
+                pantry: {
+                  type: "array",
+                  items: { type: "string" },
+                },
+                // ... other expected inputs
+              },
+              required: ["sleepHours", "pantry"],
             },
           },
         },
