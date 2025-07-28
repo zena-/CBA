@@ -141,7 +141,7 @@ Return a DailyProtocol JSON object.
 
     // Parse JSON output
     const message = response.output?.find((o: any) => o.type === "message");
-    const content = message?.content?.find((c: any) => c.type === "output_json");
+    const content = (message as any)?.content?.find((c: any) => c.type === "output_json");
     const protocol = (content?.parsed ?? content?.json) as DailyProtocol | undefined;
 
     if (!protocol) {
