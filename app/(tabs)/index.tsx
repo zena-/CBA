@@ -74,7 +74,7 @@ export default function Guidance() {
       sleepHours: sleepHours ?? 8,
       meetingsToday: meetingsToday ?? 0,
       cyclePhase: false,
-      pantry,
+      pantry: ['butter', 'eggs'],
     };
 
     (async () => {
