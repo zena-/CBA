@@ -131,7 +131,7 @@ export default async function handler(req: Request): Promise<Response> {
 
     return new Response(JSON.stringify(json), {
       status: 200,
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "access-control-allow-origin": "*" },
     });
   } catch (err: any) {
     console.error("protocol API error", err);

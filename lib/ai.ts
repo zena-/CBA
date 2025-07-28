@@ -15,7 +15,7 @@ export type Context = {
 // Prioritize env var, fallback to production URL
 const API_URL =
   process.env.EXPO_PUBLIC_API_BASE?.trim() ||
-  'https://cba-pzlu.vercel.app/api/chat';
+  'https://cba-pzlu.vercel.app/api/protocol';
 
 export async function generateProtocol(context: Context): Promise<DailyProtocol> {
   const res = await fetch(API_URL, {
