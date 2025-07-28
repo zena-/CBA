@@ -146,7 +146,7 @@ Return a DailyProtocol JSON object.
     });
 
     // Parse JSON output
-    const message = response.output?.find((o: any) => o.type === "message");
+    const message = response.choices?.[0]?.message;
     const content = Array.isArray(message?.content)
       ? message.content.find((c: any) => c.type === "output_json")
       : undefined;
