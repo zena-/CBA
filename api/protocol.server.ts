@@ -3,9 +3,7 @@ import OpenAI from "openai";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import type { DailyProtocol } from "../types/protocol";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const ZAPIER_MCP_URL = process.env.ZAPIER_MCP_URL!;
 const ZAPIER_MCP_KEY = process.env.ZAPIER_MCP_KEY!;
@@ -117,7 +115,7 @@ Return a DailyProtocol JSON object.
       strict: true
     };
 
-    const response = await openai.beta.chat.completions.create({
+    const response = await openai.chat.completions.create({
       model: "gpt-4-1106-preview", // or "gpt-4o"
       messages: [
         { role: "system", content: system },
