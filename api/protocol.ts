@@ -142,9 +142,9 @@ export default async function handler(req: Request): Promise<Response> {
       model: "gpt-4.1-mini",
       tools: [zapierTool],
       tool_choice: "auto",
-      response_format: {
-        type: "json_schema",
-        json_schema: protocolSchema,
+      text: {
+        format: "json",
+        schema: protocolSchema,
       },
       input: [
         {
