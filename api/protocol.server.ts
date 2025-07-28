@@ -117,31 +117,33 @@ Return a DailyProtocol JSON object.
       strict: true
     };
 
-    const response = await openai.responses.create({
-      model: "gpt-4.1-mini", // cheap + tool use; bump to 4.1 if needed
-      input: [
+    const response = await openai.beta.chat.completions.create({
+      model: "gpt-4-1106-preview", // or "gpt-4o" if available
+      messages: [
         { role: "system", content: system },
         { role: "user", content: user },
       ],
-      response_format: { type: "json_schema", json_schema: jsonSchema },
       tools: [
         {
-          type: "mcp",
-          server_label: "zapier",
-          server_url: ZAPIER_MCP_URL,
-          require_approval: "never",
-          headers: {
-            Authorization: `Bearer ${ZAPIER_MCP_KEY}`,
+          type: "function",
+          function: {
+            name: "zapier",
+            description: "Call Zapier MCP",
+            parameters: {
+              type: "object",
+              properties: {},
+            },
           },
         },
       ],
       tool_choice: "auto",
-      temperature: 0.2,
     });
 
     // Parse JSON output
     const message = response.output?.find((o: any) => o.type === "message");
-    const content = (message as any)?.content?.find((c: any) => c.type === "output_json");
+    const content = Array.isArray(message?.content)
+      ? message.content.find((c: any) => c.type === "output_json")
+      : undefined;
     const protocol = (content?.parsed ?? content?.json) as DailyProtocol | undefined;
 
     if (!protocol) {
