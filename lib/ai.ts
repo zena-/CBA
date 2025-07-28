@@ -15,24 +15,32 @@ export type Context = {
 // Prioritize env var, fallback to production URL
 const API_URL =
   process.env.EXPO_PUBLIC_API_BASE?.trim() ||
-  'https://cba-pzlu.vercel.app/api/protocol';
+  'https://cba.vercel.app/api/protocol';
 
 export async function generateProtocol(context: Context): Promise<DailyProtocol> {
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ user: context }),
-  });
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(context),
+    });
 
-  if (!res.ok) {
-    throw new Error('Failed to generate protocol');
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('Protocol API error:', errorText);
+      throw new Error('Failed to generate protocol');
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.warn('Falling back to local protocol:', err);
+    return fallbackProtocol(context);
   }
-
-  const data = await res.json();
-  return data.protocol;
 }
+
 
 // --- Very small fallback just in case ---
 function fallbackProtocol(ctx: Context): DailyProtocol {

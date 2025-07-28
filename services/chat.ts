@@ -7,7 +7,7 @@ export type ContextPayload = {
   weather?: string;
 };
 
-const API_URL = 'https://cba-pzlu.vercel.app/api/protocol';
+const API_URL = 'https://cba.vercel.app/api/protocol';
 
 // export async function sendToChiliB(
 //   messages: ChatMessage[],
