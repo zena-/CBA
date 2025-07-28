@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 
 export const config = {
-  runtime: "edge", // no @vercel/node
+  runtime: "edge",
 };
 
 type Context = {
@@ -75,7 +75,7 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response(null, {
       status: 204,
       headers: {
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": req.headers.get("origin") || "*",
         "Access-Control-Allow-Methods": "POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
@@ -94,9 +94,7 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   try {
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const zapierTool = {
       type: "mcp",
@@ -108,7 +106,6 @@ export default async function handler(req: Request): Promise<Response> {
       },
     };
 
-    // Cast to any to dodge SDK type drift on Vercel (we can tighten later)
     const resp: any = await (openai as any).responses.create({
       model: "gpt-4.1-mini",
       tool_choice: "auto",
@@ -136,15 +133,15 @@ export default async function handler(req: Request): Promise<Response> {
     );
     const json = jsonNode?.json;
 
-    if (!json) {
-      throw new Error("No output_json in response");
-    }
+    if (!json) throw new Error("No output_json in response");
 
     return new Response(JSON.stringify(json), {
       status: 200,
-      headers: { 
-        "content-type": "application/json", 
-        "access-control-allow-origin": "*" 
+      headers: {
+        "Access-Control-Allow-Origin": req.headers.get("origin") || "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Content-Type": "application/json",
       },
     });
   } catch (err: any) {
@@ -155,7 +152,10 @@ export default async function handler(req: Request): Promise<Response> {
       }),
       {
         status: 500,
-        headers: { "content-type": "application/json" },
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Content-Type": "application/json",
+        },
       }
     );
   }
