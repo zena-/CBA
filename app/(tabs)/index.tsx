@@ -14,9 +14,14 @@ import { useState, useEffect } from 'react';
 import { streamToChiliB } from '../../services/chat';
 import type { ChatMessage } from '../../services/chat';
 import type { DailyProtocol } from '../../types/protocol';
-import { getPantryItems } from '../../lib/storage';
+import {
+  saveMessagesForToday,
+  loadMessagesForToday,
+  clearOldMessages,
+  getPantryItems
+} from '../../lib/storage';
 import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
+// import * as Device from 'expo-device';
 import { Alert } from 'react-native';
 
 
@@ -33,6 +38,7 @@ export default function Guidance() {
     const userMsg: ChatMessage = { type: 'user', text: input.trim() };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
+    await saveMessagesForToday(newMessages);
     setInput('');
 
     try {
@@ -49,13 +55,15 @@ export default function Guidance() {
 
       await streamToChiliB(contextPayload, (chunk) => {
         streamed = chunk;
-        setMessages((prev) =>
-          prev.map((msg, i) =>
+        setMessages((prev) => {
+          const updated = prev.map((msg, i) =>
             i === prev.length - 1 && msg.type === 'ai'
               ? { ...msg, text: streamed }
               : msg
-          )
-        );
+          );
+          saveMessagesForToday(updated);
+          return updated;
+        });
       });
 
     } catch (e) {
@@ -74,38 +82,45 @@ export default function Guidance() {
 
   // Generate structured protocol once pantry is ready
   useEffect(() => {
-    const context: Context = {
-      sleepHours: sleepHours ?? 8,
-      meetingsToday: meetingsToday ?? 0,
-      cyclePhase: false,
-      pantry: ['butter', 'eggs'],
+    const loadProtocolAndMessages = async () => {
+      try {
+        const pantryItems = await getPantryItems();
+
+        const context: Context = {
+          sleepHours: sleepHours ?? 8,
+          meetingsToday: meetingsToday ?? 0,
+          cyclePhase: false,
+          pantry: pantryItems,
+        };
+
+        const p = await generateProtocol(context);
+        setProtocol(p);
+
+        const hour = new Date().getHours();
+        let currentBlock = 'morning';
+        if (hour >= 12 && hour < 17) currentBlock = 'afternoon';
+        else if (hour >= 17 && hour < 24) currentBlock = 'evening';
+        else if (hour >= 0 && hour < 6) currentBlock = 'other';
+
+        const initialMsgs: ChatMessage[] = p.blocks
+          .filter((block) => block.title === currentBlock)
+          .map((block) => ({
+            type: 'ai',
+            text: `${block.title.toUpperCase()}:\n${block.items.map((i) => `• ${i}`).join('\n')}`,
+          }));
+
+        setMessages(initialMsgs);
+      } catch (e) {
+        console.error('Error generating protocol:', e);
+      }
     };
 
-    (async () => {
-      const p = await generateProtocol(context);
-      console.log('Generated protocol:', p);
-      setProtocol(p);
-
-      const hour = new Date().getHours();
-      let currentBlock = 'morning';
-      if (hour >= 12 && hour < 17) currentBlock = 'afternoon';
-      else if (hour >= 17 && hour < 24) currentBlock = 'evening';
-      else if (hour >= 0 && hour < 6) currentBlock = 'other'; // optional
-
-      const initialMsgs: ChatMessage[] = p.blocks
-        .filter((block) => block.title === currentBlock)
-        .map((block) => ({
-          type: 'ai',
-          text: `${block.title.toUpperCase()}:\n${block.items.map((i) => `• ${i}`).join('\n')}`,
-        }));
-
-      setMessages(initialMsgs);
-    })();
-  }, [pantry, sleepHours, meetingsToday]);
+    loadProtocolAndMessages();
+  }, [sleepHours, meetingsToday]);
 
   useEffect(() => {
     const setupNotifications = async () => {
-      if (!Device.isDevice) return;
+      // if (!Device.isDevice) return;
 
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== 'granted') {

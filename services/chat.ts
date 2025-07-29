@@ -29,10 +29,7 @@ const API_URL = 'https://cba-swart.vercel.app/api/protocol';
 // }
 
 export async function streamToChiliB(contextPayload: any, onChunk: (text: string) => void) {
-  const response = await fetch('https://cba-pzlu.vercel.app/api/protocol', {
-    response.setHeader('Access-Control-Allow-Origin', '*');
-    response.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  const response = await fetch('https://cba-swart.vercel.app/api/protocol', {
     method: 'POST',
     body: JSON.stringify(contextPayload),
     headers: { 'Content-Type': 'application/json' },
