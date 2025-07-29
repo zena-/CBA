@@ -6,7 +6,11 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
+import { Slot } from 'expo-router';
+
 export default function RootLayout() {
+  return <Slot />;
+  
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/gothampro.ttf'),

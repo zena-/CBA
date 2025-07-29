@@ -3,4 +3,4 @@ export default function (api) {
   return {
     presets: ['babel-preset-expo']
   };
-};
+}

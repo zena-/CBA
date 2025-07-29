@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import { functions, getFrozenTreatIdeas } from '../lib/functions';
 import { NextApiRequest, NextApiResponse } from 'next';
 
-export const config = { runtime: 'edge' };
+export const config = { runtime: 'edge' }; // edge runtime still supported
 
 type Context = {
   sleepHours?: number;

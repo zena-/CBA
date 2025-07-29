@@ -1,7 +1,13 @@
 import OpenAI from 'openai';
 import { functions, getFrozenTreatIdeas } from '../lib/functions';
+import { API_URL } from '../lib/config';
+import Constants from 'expo-constants';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// const OPENAI_API_KEY = Constants.expoConfig?.extra?.OPENAI_API_KEY;
+
+
+const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+// const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export type ChatMessage = { type: 'user' | 'ai'; text: string };
 export type ContextPayload = {
@@ -12,7 +18,7 @@ export type ContextPayload = {
   weather?: string;
 };
 
-const API_URL = 'https://cba-swart.vercel.app/api/protocol';
+// const API_URL = 'https://cba-swart.vercel.app/api/protocol';
 
 export async function streamToChiliB(contextPayload: any, onChunk: (text: string) => void) {
   const response = await fetch('https://cba-swart.vercel.app/api/protocol', {
