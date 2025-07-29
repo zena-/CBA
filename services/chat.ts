@@ -1,3 +1,8 @@
+import OpenAI from 'openai';
+import { functions, getFrozenTreatIdeas } from '../lib/functions';
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
 export type ChatMessage = { type: 'user' | 'ai'; text: string };
 export type ContextPayload = {
   sleepHours?: number;
@@ -8,25 +13,6 @@ export type ContextPayload = {
 };
 
 const API_URL = 'https://cba-swart.vercel.app/api/protocol';
-
-// export async function sendToChiliB(
-//   messages: ChatMessage[],
-//   context: ContextPayload
-// ): Promise<string> {
-//   const res = await fetch(API_URL, {
-//     method: 'POST',
-//     headers: { 'Content-Type': 'application/json' },
-//     body: JSON.stringify({ messages, context }),
-//   });
-
-//   if (!res.ok) {
-//     console.warn('Chat API error', await res.text());
-//     throw new Error('Chat API failed');
-//   }
-
-//   const data = await res.json();
-//   return data.reply as string;
-// }
 
 export async function streamToChiliB(contextPayload: any, onChunk: (text: string) => void) {
   const response = await fetch('https://cba-swart.vercel.app/api/protocol', {
@@ -48,4 +34,32 @@ export async function streamToChiliB(contextPayload: any, onChunk: (text: string
   }
 
   return text;
+}
+
+export async function sendToChiliB(messages: any[]) {
+  const res = await openai.chat.completions.create({
+    model: 'gpt-4-0613',
+    messages,
+    functions,
+    function_call: 'auto',
+  });
+
+  const msg = res.choices[0].message;
+
+  if (msg.function_call) {
+    const { name, arguments: argsString } = msg.function_call;
+    const args = JSON.parse(argsString);
+
+    if (name === 'getFrozenTreatIdeas') {
+      const result = await getFrozenTreatIdeas(args);
+
+      return {
+        role: 'function',
+        name,
+        content: JSON.stringify(result),
+      };
+    }
+  }
+
+  return msg;
 }

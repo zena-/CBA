@@ -35,43 +35,63 @@ export default function Guidance() {
   const handleUserSubmit = async () => {
     if (!input.trim()) return;
 
+    const { mode, aiText, topic } = detectUserIntent(input);
     const userMsg: ChatMessage = { type: 'user', text: input.trim() };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    await saveMessagesForToday(newMessages);
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
+    await saveMessagesForToday(updatedMessages);
     setInput('');
 
     try {
-      const contextPayload = {
-        sleepHours,
-        meetingsToday,
-        cyclePhase: false,
-        pantry,
-        weather: { summary: 'Clear', temperature: 78, humidity: 55 },
-      };
+      if (mode === 'custom' && aiText) {
+        const newAi = { type: 'ai', text: aiText };
+        const final = [...updatedMessages, newAi];
+        setMessages(final);
+        saveMessagesForToday(final);
+        return;
+      }
 
-      let streamed = '';
-      setMessages((prev) => [...prev, { type: 'ai', text: '' }]); // placeholder
+      setMessages((prev) => [...prev, { type: 'ai', text: '' }]);
 
-      await streamToChiliB(contextPayload, (chunk) => {
-        streamed = chunk;
-        setMessages((prev) => {
-          const updated = prev.map((msg, i) =>
-            i === prev.length - 1 && msg.type === 'ai'
-              ? { ...msg, text: streamed }
-              : msg
-          );
-          saveMessagesForToday(updated);
-          return updated;
+      if (mode === 'protocol') {
+        const contextPayload: Context = {
+          pantry,
+          sleepHours: sleepHours ?? 8,
+          meetingsToday: meetingsToday ?? 0,
+          cyclePhase: false,
+        };
+
+        let streamed = '';
+        await streamToChiliB(contextPayload, (chunk) => {
+          streamed = chunk;
+          setMessages((prev) => {
+            const updated = prev.map((msg, i) =>
+              i === prev.length - 1 && msg.type === 'ai'
+                ? { ...msg, text: streamed }
+                : msg
+            );
+            saveMessagesForToday(updated);
+            return updated;
+          });
         });
-      });
+      } else {
+        const aiResponse = await sendToChiliB([
+          { role: 'system', content: 'You are Chili B., a helpful AI wellness assistant.' },
+          ...updatedMessages.map((m) => ({
+            role: m.type === 'user' ? 'user' : 'assistant',
+            content: m.text,
+          })),
+        ]);
 
+        const newAi = { type: 'ai', text: aiResponse.content ?? '' };
+        const final = [...updatedMessages, newAi];
+        setMessages(final);
+        saveMessagesForToday(final);
+      }
     } catch (e) {
-      console.log(e);
-      setMessages((prev) => [
-        ...prev,
-        { type: 'ai', text: "Hmm, I'm having trouble connecting right now." },
-      ]);
+      console.error(e);
+      const errMsg = { type: 'ai', text: "Hmm, I'm having trouble connecting right now." };
+      setMessages((prev) => [...prev, errMsg]);
     }
   };
 
@@ -160,8 +180,23 @@ export default function Guidance() {
 
   if (!protocol) {
     return (
-      <View style={{ padding: 40 }}>
-        <Text>Loading protocol...</Text>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: '#F7F4EF',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Image
+          source={require('../../assets/images/loading.jpg')}
+          style={{
+            width: 280,
+            height: 280,
+            resizeMode: 'contain',
+            marginBottom: 24,
+          }}
+        />
       </View>
     );
   }
