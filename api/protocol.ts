@@ -12,7 +12,7 @@ type Context = {
 
 const protocolJsonSchema = {
   type: "object",
-  required: ["date", "summary", "blocks"],
+  required: ["date", "summary", "blocks", "weather"],
   additionalProperties: false,
   properties: {
     date: { type: "string" },
@@ -26,8 +26,8 @@ const protocolJsonSchema = {
         properties: {
           id: { type: "string" },
           title: {
-          type: "string",
-          enum: ["morning", "afternoon", "evening", "other"],
+            type: "string",
+            enum: ["morning", "afternoon", "evening", "other"],
           },
           items: {
             type: "array",
@@ -39,7 +39,7 @@ const protocolJsonSchema = {
     pantry_ideas: { type: "array", items: { type: "string" } },
     weather: {
       type: "object",
-      required: ["tempF", "condition", "icon"],
+      required: ["tempF", "summary"],
       additionalProperties: false,
       properties: {
         tempF: { type: "number" },
@@ -52,6 +52,7 @@ const protocolJsonSchema = {
       type: "array",
       items: {
         type: "object",
+        required: ["kind", "url", "title"], // Optional: only if all 3 are needed
         additionalProperties: false,
         properties: {
           kind: { type: "string" },
