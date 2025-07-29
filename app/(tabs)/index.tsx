@@ -11,10 +11,14 @@ import {
 import { useAppData } from '../../hooks/useAppData';
 import { generateProtocol, Context } from '../../lib/ai';
 import { useState, useEffect } from 'react';
-import { sendToChiliB } from '../../services/chat';
+import { streamToChiliB } from '../../services/chat';
 import type { ChatMessage } from '../../services/chat';
 import type { DailyProtocol } from '../../types/protocol';
 import { getPantryItems } from '../../lib/storage';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import { Alert } from 'react-native';
+
 
 export default function Guidance() {
   const [protocol, setProtocol] = useState<DailyProtocol | null>(null);
@@ -82,14 +86,62 @@ export default function Guidance() {
       console.log('Generated protocol:', p);
       setProtocol(p);
 
-      const initialMsgs: ChatMessage[] = p.blocks.map((block) => ({
-        type: 'ai',
-        text: `${block.title.toUpperCase()}:\n${block.items.map((i) => `• ${i}`).join('\n')}`,
-      }));
+      const hour = new Date().getHours();
+      let currentBlock = 'morning';
+      if (hour >= 12 && hour < 17) currentBlock = 'afternoon';
+      else if (hour >= 17 && hour < 24) currentBlock = 'evening';
+      else if (hour >= 0 && hour < 6) currentBlock = 'other'; // optional
+
+      const initialMsgs: ChatMessage[] = p.blocks
+        .filter((block) => block.title === currentBlock)
+        .map((block) => ({
+          type: 'ai',
+          text: `${block.title.toUpperCase()}:\n${block.items.map((i) => `• ${i}`).join('\n')}`,
+        }));
 
       setMessages(initialMsgs);
     })();
   }, [pantry, sleepHours, meetingsToday]);
+
+  useEffect(() => {
+    const setupNotifications = async () => {
+      if (!Device.isDevice) return;
+
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission required', 'Enable notifications to receive your Chili B. protocol.');
+        return;
+      }
+
+      await Notifications.cancelAllScheduledNotificationsAsync();
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Chili B.',
+          body: 'Morning protocol is ready!',
+        },
+        trigger: { hour: 6, minute: 0, repeats: true },
+      });
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Chili B.',
+          body: 'Afternoon update.',
+        },
+        trigger: { hour: 12, minute: 0, repeats: true },
+      });
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Chili B.',
+          body: 'Evening time.',
+        },
+        trigger: { hour: 17, minute: 0, repeats: true },
+      });
+    };
+
+    setupNotifications();
+  }, []);
 
   if (!protocol) {
     return (

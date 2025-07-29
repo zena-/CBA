@@ -27,7 +27,7 @@ const protocolJsonSchema = {
           id: { type: "string" },
           title: {
             type: "string",
-            enum: ["morning", "afternoon", "evening", "other"],
+            enum: ["morning", "afternoon", "evening"],
           },
           items: {
             type: "array",

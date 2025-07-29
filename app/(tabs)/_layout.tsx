@@ -1,8 +1,20 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'react-native';
+import { useEffect } from 'react';
+import * as Notifications from 'expo-notifications';
 
 export default function TabLayout() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(() => {
+      router.push('/');
+    });
+
+    return () => sub.remove();
+  }, []);
+
   return (
     <Tabs screenOptions={{ headerShown: false, tabBarShowLabel: false }}>
       <Tabs.Screen
