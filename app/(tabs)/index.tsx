@@ -11,7 +11,8 @@ import {
 import { useAppData } from '../../hooks/useAppData';
 import { generateProtocol, Context } from '../../lib/ai';
 import { useState, useEffect } from 'react';
-import { streamToChiliB } from '../../services/chat';
+import { detectUserIntent } from '../../lib/utils';
+import { sendToChiliB, streamToChiliB } from '../../services/chat';
 import type { ChatMessage } from '../../services/chat';
 import type { DailyProtocol } from '../../types/protocol';
 import {
