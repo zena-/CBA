@@ -112,11 +112,10 @@ export default async function handler(req: Request): Promise<Response> {
       tools: [zapierTool],
       tool_choice: "auto",
       text: {
-        name: "DailyProtocol",
         format: {
           type: "json_schema",
-          schema: protocolJsonSchema,
           strict: true,
+          schema: protocolJsonSchema,
         },
       },
       input: [
