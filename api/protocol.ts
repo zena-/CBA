@@ -12,7 +12,7 @@ type Context = {
 
 const protocolJsonSchema = {
   type: "object",
-  required: ["date", "summary", "blocks", "weather", "pantry_ideas", "busy"],
+  required: ["date", "summary", "blocks", "weather", "pantry_ideas", "busy", "reminders", "sources"],
   additionalProperties: false,
   properties: {
     date: { type: "string" },
