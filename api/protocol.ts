@@ -10,7 +10,6 @@ type Context = {
   weather?: { tempF?: number; summary?: string };
 };
 
-// ---- just the raw JSON Schema (no "name", no "strict" here) ----
 const protocolJsonSchema = {
   type: "object",
   required: ["date", "summary", "blocks"],
@@ -112,11 +111,10 @@ export default async function handler(req: Request): Promise<Response> {
       model: "gpt-4.1-mini",
       tools: [zapierTool],
       tool_choice: "auto",
-      // ---- THIS IS THE SHAPE YOUR SDK IS ASKING FOR ----
       text: {
         format: {
-          name: "json_schema",
-          json_schema: {
+          type: "json_schema",
+          schema: {
             name: "DailyProtocol",
             strict: true,
             schema: protocolJsonSchema,
@@ -136,7 +134,6 @@ export default async function handler(req: Request): Promise<Response> {
       ],
     });
 
-    // ---- Parse robustly ----
     let json: any = response?.output_parsed;
     if (!json && response?.output_text) {
       try {
