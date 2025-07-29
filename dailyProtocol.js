@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 import OpenAI from "openai";
 
-config(); // load env vars
+config();
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -13,7 +13,7 @@ async function dailyProtocol() {
     input: `Run daily_protocol: 
     1. Check today's Google Calendar for busy times
     2. Grab the current weather in Austin, TX
-    3. how to make monkeybread?
+    3. Suggest a YouTube video for a great blueberry smoothie
     Return a short morning/afternoon/evening wellness protocol.`,
     tool_choice: "auto",
     tools: [
