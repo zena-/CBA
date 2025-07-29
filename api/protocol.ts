@@ -39,6 +39,7 @@ const protocolJsonSchema = {
     pantry_ideas: { type: "array", items: { type: "string" } },
     weather: {
       type: "object",
+      required: ["tempF", "condition", "icon"],
       additionalProperties: false,
       properties: {
         tempF: { type: "number" },
