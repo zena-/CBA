@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { functions, getFrozenTreatIdeas } from '../../lib/functions';
+import { functions, getFrozenTreatIdeas } from '../lib/functions';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export const config = { runtime: 'edge' };
