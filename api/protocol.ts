@@ -114,7 +114,7 @@ export default async function handler(req: Request): Promise<Response> {
       text: {
         format: {
           type: "json_schema",
-          schema: {
+          name: {
             name: "DailyProtocol",
             strict: true,
             schema: protocolJsonSchema,
