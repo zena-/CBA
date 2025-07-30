@@ -3,11 +3,8 @@ import { functions, getFrozenTreatIdeas } from '../lib/functions';
 import { API_URL } from '../lib/config';
 import Constants from 'expo-constants';
 
-// const OPENAI_API_KEY = Constants.expoConfig?.extra?.OPENAI_API_KEY;
 
-
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
-// const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export type ChatMessage = { type: 'user' | 'ai'; text: string };
 export type ContextPayload = {
