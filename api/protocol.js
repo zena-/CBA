@@ -1,14 +1,5 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
-import { functions, getFrozenTreatIdeas } from '../lib/functions';
-
-type Context = {
-  sleepHours?: number;
-  meetingsToday?: number;
-  cyclePhase?: boolean;
-  pantry?: string[];
-  weather?: { tempF?: number; summary?: string };
-};
+import { functions, getFrozenTreatIdeas } from '../lib/functions.js';
 
 const protocolJsonSchema = {
   type: 'object',
@@ -57,21 +48,21 @@ const protocolJsonSchema = {
     },
     sources: { type: 'array', items: { type: 'string' } },
   },
-} as const;
+};
 
-function setCorsHeaders(res: NextApiResponse) {
+function setCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req, res) {
   setCorsHeaders(res);
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  const missing: string[] = [];
+  const missing = [];
   if (!process.env.OPENAI_API_KEY) missing.push('OPENAI_API_KEY');
   if (!process.env.ZAPIER_MCP_URL) missing.push('ZAPIER_MCP_URL');
   if (!process.env.ZAPIER_MCP_KEY) missing.push('ZAPIER_MCP_KEY');
@@ -80,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: `Missing env vars: ${missing.join(', ')}` });
   }
 
-  let ctx: Context;
+  let ctx;
   try {
     ctx = req.body;
   } catch {
@@ -88,17 +79,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const zapierTool = {
       type: 'mcp',
       server_label: 'zapier',
-      server_url: process.env.ZAPIER_MCP_URL!,
-      require_approval: 'never' as const,
+      server_url: process.env.ZAPIER_MCP_URL,
+      require_approval: 'never',
       headers: { Authorization: `Bearer ${process.env.ZAPIER_MCP_KEY}` },
     };
 
-    const response: any = await (openai as any).responses.create({
+    const response = await openai.responses.create({
       model: 'gpt-4-0613',
       tools: [zapierTool],
       tool_choice: 'auto',
@@ -125,7 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ],
     });
 
-    let json: any = response?.output_parsed;
+    let json = response?.output_parsed;
 
     if (!json && response?.output_text) {
       try {
@@ -136,7 +127,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!json && Array.isArray(response?.output)) {
       try {
         const first = response.output[0];
-        const node = first?.content?.find((c: any) => c?.type === 'output_json' || c?.parsed || c?.json);
+        const node = first?.content?.find(c => c?.type === 'output_json' || c?.parsed || c?.json);
         json = node?.parsed ?? node?.json;
       } catch {}
     }
@@ -161,8 +152,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     return res.status(200).json(json);
-  } catch (err: any) {
+  } catch (err) {
     console.error('protocol API error:', err?.message || err);
     return res.status(500).json({ error: err?.message ?? 'unknown' });
   }
-}
+};

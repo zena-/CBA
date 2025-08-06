@@ -2,7 +2,6 @@
   "name": "chili-b-ai",
   "main": "expo-router/entry",
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
     "dev": "next dev",
     "start": "expo start",
@@ -58,7 +57,8 @@
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
     "tailwindcss": "^3.4.17",
-    "typescript": "~5.8.3"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
   },
   "engines": {
     "node": "20.x"
