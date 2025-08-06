@@ -1,7 +1,9 @@
 {
-  "functions": {
-    "api/*.js": {
-      "runtime": "nodejs20.x"
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/index",
+      "permanent": false
     }
-  }
+  ]
 }
