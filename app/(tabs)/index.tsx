@@ -38,7 +38,7 @@ export default function Guidance() {
       pantry,
     };
 
-    const res = await fetch('https://cba-swart.vercel.app/api/protocol', {
+    const res = await fetch('http://localhost:3000/api/protocol',{ //'https://cba-swart.vercel.app/api/protocol', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(context),

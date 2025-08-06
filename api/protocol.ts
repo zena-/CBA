@@ -1,8 +1,6 @@
+import { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 import { functions, getFrozenTreatIdeas } from '../lib/functions';
-import { NextApiRequest, NextApiResponse } from 'next';
-
-//export const config = { runtime: 'edge' }; // edge runtime still supported
 
 type Context = {
   sleepHours?: number;
@@ -61,22 +59,17 @@ const protocolJsonSchema = {
   },
 } as const;
 
-function cors(origin?: string | null) {
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  };
+function setCorsHeaders(res: NextApiResponse) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
-export default async function handler(req: Request): Promise<Response> {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: cors(req.headers.get('origin')) });
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  setCorsHeaders(res);
 
-  if (req.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405 });
-  }
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const missing: string[] = [];
   if (!process.env.OPENAI_API_KEY) missing.push('OPENAI_API_KEY');
@@ -84,24 +77,18 @@ export default async function handler(req: Request): Promise<Response> {
   if (!process.env.ZAPIER_MCP_KEY) missing.push('ZAPIER_MCP_KEY');
 
   if (missing.length) {
-    return new Response(JSON.stringify({ error: `Missing env vars: ${missing.join(', ')}` }), {
-      status: 500,
-      headers: { ...cors(req.headers.get('origin')), 'Content-Type': 'application/json' },
-    });
+    return res.status(500).json({ error: `Missing env vars: ${missing.join(', ')}` });
   }
 
   let ctx: Context;
   try {
-    ctx = (await req.json()) as Context;
+    ctx = req.body;
   } catch {
-    return new Response(JSON.stringify({ error: 'Bad Request: invalid JSON' }), {
-      status: 400,
-      headers: { ...cors(req.headers.get('origin')), 'Content-Type': 'application/json' },
-    });
+    return res.status(400).json({ error: 'Bad Request: invalid JSON' });
   }
 
   try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
     const zapierTool = {
       type: 'mcp',
@@ -161,10 +148,7 @@ export default async function handler(req: Request): Promise<Response> {
 
         if (fc.name === 'getFrozenTreatIdeas') {
           const result = await getFrozenTreatIdeas(args);
-          return new Response(JSON.stringify(result), {
-            status: 200,
-            headers: { ...cors(req.headers.get('origin')), 'Content-Type': 'application/json' },
-          });
+          return res.status(200).json(result);
         }
       } catch (err) {
         console.warn('Function fallback failed', err);
@@ -176,15 +160,9 @@ export default async function handler(req: Request): Promise<Response> {
       throw new Error('No JSON found in OpenAI response');
     }
 
-    return new Response(JSON.stringify(json), {
-      status: 200,
-      headers: { ...cors(req.headers.get('origin')), 'Content-Type': 'application/json' },
-    });
+    return res.status(200).json(json);
   } catch (err: any) {
     console.error('protocol API error:', err?.message || err);
-    return new Response(JSON.stringify({ error: err?.message ?? 'unknown' }), {
-      status: 500,
-      headers: { ...cors(req.headers.get('origin')), 'Content-Type': 'application/json' },
-    });
+    return res.status(500).json({ error: err?.message ?? 'unknown' });
   }
 }
